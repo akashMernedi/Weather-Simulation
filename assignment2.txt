@@ -1,0 +1,74 @@
+﻿import numpy as np
+
+
+class WeatherSimulation:
+    def __init__(self, transition_probabilities, holding_times):
+        self.transition_probabilities = transition_probabilities
+        self.holding_times = holding_times
+        self.state = 'sunny'
+        self.hold_time = 0
+        # Checking total values of transition states
+        for value in transition_probabilities:
+            total = sum(transition_probabilities[value].values())
+            if total != 1.0:
+                raise RuntimeError('The Value is greater than 1')
+
+    # Return list of all the states
+    def get_states(self):
+        return list(self.transition_probabilities.keys())
+
+    # Returns current state
+    def current_state(self):
+        return self.state
+
+    # Moves to next state in simulation
+    def next_state(self):
+        if self.hold_time <= 0:
+            self.state = np.random.choice(self.get_states(), p=list(self.transition_probabilities[self.state].values()))
+            self.hold_time = self.holding_times[self.state]
+        
+        self.hold_time -= 1
+
+    # Changes current state to new state
+    def set_state(self, new_state):
+        self.state = new_state
+
+    # Returns remaining hours in current state
+    def current_state_remaining_hours(self):
+        return self.hold_time
+
+    # Yields current_state and moves next one in simulation
+    def iterable(self):
+        while True:
+            yield self.state
+            self.next_state()
+
+    # simulate(hours) runs the simulation for the amount of hours and returns a list of percentages that each value
+    # shows the percent of times that a state occurred in the simulation.
+    def simulate(self, hours):
+        print('simulate hours function')
+        state_keys = dict()
+        for i in self.transition_probabilities.keys():
+            state_keys[i] = 0
+        for i in range(hours):
+            # print("time",i, self.hold_time)
+            state_keys[self.current_state()] += 1
+            self.next_state()
+        state_values = list(state_keys.values())
+        # print("\n\n",state_values,"\n\n")
+        state_percentages = []
+        for i in range(len(state_values)):
+            print(state_values[i], type(state_values[i]))
+            state_percentages.append(state_values[i]/hours*100)
+        return state_percentages
+
+
+# Sample of input data types
+my_transitions = {
+    'sunny': {'sunny': 0.7, 'cloudy': 0.3, 'rainy': 0, 'snowy': 0},
+    'cloudy': {'sunny': 0.5, 'cloudy': 0.3, 'rainy': 0.15, 'snowy': 0.05},
+    'rainy': {'sunny': 0.7, 'cloudy': 0.2, 'rainy': 0.5, 'snowy': 0.05},
+    'snowy': {'sunny': 0.7, 'cloudy': 0.1, 'rainy': 0.05, 'snowy': 0.15}
+}
+my_holding_times = {'sunny': 1, 'cloudy': 2, 'rainy': 2, 'snowy': 1}
+# WeatherSimulation(my_transitions, my_holding_times)
